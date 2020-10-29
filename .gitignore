@@ -1,0 +1,6 @@
+.stack-work/
+*~
+out/
+.idea/
+task-x-vs-o.iml
+task-x-vs-o.cabal
