@@ -4,7 +4,30 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE BlockArguments #-}
 
-module XO.Game where
+module XO.Game
+  ( MarkXO(..)
+  , Cell
+  , Board
+  , FinaResult(..)
+  , Position
+  
+  , isEmptyCell
+  , inCell
+  
+  , emptyBoard
+  , correctBoard
+  , withCheckBoard
+  
+  , setAt
+  , setAt_
+  
+  , findResult
+  , botStep
+  
+  , (<$$>)
+  , ($<$>)
+  , (!!-!!)
+  ) where
 
 import Data.Maybe (isNothing, fromJust)
 import GHC.Generics (Generic)
@@ -24,18 +47,23 @@ type Cell = Maybe MarkXO
 -- | Type of the board
 type Board = [[Cell]]
 
+-- | Create empty board
 emptyBoard :: Board
 emptyBoard = replicate 3 $ replicate 3 Nothing
 
+-- | Check that given cell is empty
 isEmptyCell :: Maybe MarkXO -> Bool
 isEmptyCell = isNothing
 
+-- | Check that given value in given value
 inCell :: MarkXO -> Maybe MarkXO -> Bool
 inCell expected (Just mark) = expected == mark
 inCell _        _           = False
 
+-- | Type of position
 type Position = (Int, Int)
 
+-- | Get value from 2d matrix
 infixl 9 !!-!!
 (!!-!!) :: [[a]] -> Position -> a
 board !!-!! (row, column) = board !! row !! column
@@ -61,27 +89,27 @@ correctBoard :: Board -> Bool
 correctBoard board =
   length board == 3 && (length <$> board) == [3, 3, 3]
 
--- | Inverted version of correctBoard
-incorrectBoard :: Board -> Bool
-incorrectBoard = not . correctBoard
-
 -- | Throw error if board has incorrect size
 withCheckBoard :: Board -> r -> r
 withCheckBoard board r
   | correctBoard board = r
   | otherwise          = error "Incorrect board size"
 
+-- | 'fmap' for 2d matrix
 infixr 5 <$$>
 (<$$>) :: (Functor rows, Functor cells) => (a -> b) -> rows (cells a) -> rows (cells b)
 f <$$> board = (f <$>) <$> board
 
+-- | Double apply function for 2d matrix
 infixr 5 $<$>
 ($<$>) :: Functor f => (f a -> a) -> f (f a) -> a
 f $<$> board = f $ f <$> board
 
+-- | Set value to the given position in 2d matrix
 setAt :: Position -> a -> [[a]] -> [[a]]
 setAt (row, column) value board = setAt_ row board $ setAt_ column (board !! row) value
 
+-- | Set value to the given position in list
 setAt_ :: Int -> [a] -> a -> [a]
 setAt_ i ls a
   | i < 0 = ls
@@ -91,6 +119,7 @@ setAt_ i ls a
     go n (x:xs) = x : go (n-1) xs
     go _ []     = []
 
+-- | Check board on result
 findResult :: Board -> Maybe FinaResult
 findResult board = withCheckBoard board findResult_
   where
@@ -121,6 +150,7 @@ findResult board = withCheckBoard board findResult_
       , [(2, 0), (1, 1), (0, 2)]
       ]
 
+-- | Bot move
 botStep :: MarkXO -> Board -> Board
 botStep mark board = do
   let checkPosition :: Position -> First Position
@@ -131,4 +161,4 @@ botStep mark board = do
   setAt position (Just mark) board
   where
     steps :: [Position]
-    steps = [(2, ), (1, ), (0, )] <*> [1, 0, 2]
+    steps = [(1, ), (2, ), (0, )] <*> [1, 0, 2]

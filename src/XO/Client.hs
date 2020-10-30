@@ -1,4 +1,6 @@
-module XO.Client where
+module XO.Client
+  ( runGame
+  ) where
 
 import Servant.Client (ClientM, client, mkClientEnv, BaseUrl(..), Scheme(Http), runClientM)
 import Servant ((:<|>)(..))
@@ -9,14 +11,19 @@ import XO.Game
 import XO.Api
 import XO.Printer
 
+-- | new request signature
 new :: ClientM IdAndBoard
 
+-- | step request signature
 step :: Int -> Int -> Int -> ClientM ResultAndBoard
 
+-- | replay request signature
 replay :: Int -> Bool -> ClientM (Maybe Board)
 
+-- | Creating requests
 new :<|> step :<|> replay = client xoApi
 
+-- | Run game for client
 runGame :: Int -> IO ()
 runGame port = do
   manager <- newManager defaultManagerSettings

@@ -1,13 +1,16 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Main where
+module Main
+  ( main
+  ) where
 
 import System.Environment (getArgs)
 
 import XO.Client
 import XO.Server
 
+-- | Main point of the application
 main :: IO ()
 main = do
   getArgs >>= \case

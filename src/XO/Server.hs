@@ -1,4 +1,6 @@
-module XO.Server where
+module XO.Server
+  ( runServer
+  ) where
 
 import XO.Game
 import XO.Api
@@ -8,18 +10,20 @@ import Servant (Server, Handler, (:<|>)(..))
 import Network.Wai.Handler.Warp (run)
 import Control.Monad.IO.Class (liftIO)
 
-
+-- | State of the server
 type ServerState = [(Board, MarkXO)]
 
+-- | Run server
 runServer :: Int -> IO ()
 runServer port = do
   state <- newMVar []
   run port $ createApp state
 
-
+-- | Create server application
 createApp :: MVar ServerState -> Application
 createApp state = serve xoApi $ server state
 
+-- | Server logic
 server :: MVar ServerState -> Server XOApi
 server state = new
           :<|> step
@@ -57,14 +61,17 @@ server state = new
           modifyMVar state $ \s ->
             return (setAt_ (length s - 1 - playerId) s (newBoard, newMark), Just newBoard)
 
+-- | Get game data by player id
 getGame :: Int -> ServerState -> (Board, MarkXO)
 getGame playerId state = state !! (length state - 1 - playerId)
 
+-- | Set value to the board if cell is empty
 setIfEmpty :: MarkXO -> Position -> Board -> Maybe Board
 setIfEmpty mark p board
   | isEmptyCell $ board !!-!! p = Just $ setAt p (Just mark) board
   | otherwise                   = Nothing
 
+-- | Revert player mark
 botMark :: MarkXO -> MarkXO
 botMark X = O
 botMark O = X

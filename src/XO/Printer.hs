@@ -1,15 +1,24 @@
 {-# LANGUAGE LambdaCase #-}
 
-module XO.Printer where
+module XO.Printer
+  ( printBoard
+  , prepareConsole
+  , clearConsole
+  , askUser
+  , showMessage
+  , getUserSet
+  ) where
 
 import XO.Game
 import Data.List (intercalate)
-import System.IO (hReady, stdin, hSetBuffering, BufferMode(NoBuffering), hSetEcho, stdout, hFlush)
+import System.IO (hReady, stdin, hSetBuffering, BufferMode(NoBuffering), hSetEcho)
 import Control.Monad (void)
 import System.Process (system)
 
+-- | Type of the string board
 type StrBoard = [[String]]
 
+-- | Print board to the console
 printBoard :: Position -> Board -> IO ()
 printBoard sp realBoard = withCheckBoard realBoard $
   printStrBoard . starBoard $ showCell <$$> realBoard
@@ -42,6 +51,7 @@ printBoard sp realBoard = withCheckBoard realBoard $
               ++ intercalate rowSeparator ((++ "\n") . intercalate "|" <$> board)
               ++ intercalate "|" (replicate 3 "     ") ++ "\n"
 
+-- | Get pressed key name
 getKey :: IO [Char]
 getKey = reverse <$> getKey_ ""
   where getKey_ chars = do
@@ -49,14 +59,17 @@ getKey = reverse <$> getKey_ ""
           more <- hReady stdin
           (if more then getKey_ else return) (char:chars)
 
+-- | Prepare console buffers for program work
 prepareConsole :: IO ()
 prepareConsole = do
   hSetBuffering stdin NoBuffering
   hSetEcho stdin False
 
+-- | Clear console
 clearConsole :: IO ()
 clearConsole = void (system "clear")
 
+-- | Ask user tru/false question
 askUser :: String -> String -> String -> IO Bool
 askUser question yesW noW = askUser_ False
   where
@@ -69,8 +82,6 @@ askUser question yesW noW = askUser_ False
 
       putStrLn question
       putStrLn $ yes ++ "    " ++ no
-      
-      hFlush stdout
 
       key <- getKey
       case key of
@@ -79,6 +90,7 @@ askUser question yesW noW = askUser_ False
         "\n"     -> return   yesno
         _        -> askUser_ yesno
 
+-- | Run interactive getting user step
 getUserSet :: Board -> IO Position
 getUserSet board = getUserSet_ (0, 0)
   where
@@ -113,6 +125,7 @@ getUserSet board = getUserSet_ (0, 0)
     right (row, column) =
       (row, if column + 1 == length (board !! row) then column else column + 1)
 
+-- | Show some message to user
 showMessage :: String -> IO ()
 showMessage msg = do
   putStrLn msg
