@@ -10,20 +10,21 @@ module XO.Game
   , Board
   , FinaResult(..)
   , Position
-  
+
   , isEmptyCell
   , inCell
-  
+
   , emptyBoard
   , correctBoard
   , withCheckBoard
-  
+
   , setAt
   , setAt_
-  
+
   , findResult
   , botStep
-  
+  , botStep_
+
   , (<$$>)
   , ($<$>)
   , (!!-!!)
@@ -72,7 +73,7 @@ board !!-!! (row, column) = board !! row !! column
 data FinaResult
   = Win MarkXO  -- ^ Win
   | Mirror      -- ^ Mirror
-  deriving (Generic)
+  deriving (Eq, Generic)
 
 instance ToJSON   FinaResult
 instance FromJSON FinaResult
@@ -125,13 +126,13 @@ findResult board = withCheckBoard board findResult_
   where
     findResult_ :: Maybe FinaResult
     findResult_
-      | isMirror   = Just   Mirror
       | isWinner X = Just $ Win X
       | isWinner O = Just $ Win O
+      | isMirror   = Just   Mirror
       | otherwise  = Nothing
 
     isMirror :: Bool
-    isMirror = and $<$> isEmptyCell <$$> board
+    isMirror = and $<$> not . isEmptyCell <$$> board
 
     isWinner :: MarkXO -> Bool
     isWinner mark = or $ and <$> inCell mark . (board !!-!!) <$$> winList
@@ -152,13 +153,17 @@ findResult board = withCheckBoard board findResult_
 
 -- | Bot move
 botStep :: MarkXO -> Board -> Board
-botStep mark board = do
+botStep mark board = setAt (botStep_ board) (Just mark) board
+
+-- | Bot step position
+botStep_ :: Board -> Position
+botStep_ board = do
   let checkPosition :: Position -> First Position
       checkPosition = \case
-        p | isEmptyCell (board !!-!! p) -> First $ Just p
-          | otherwise                   -> First   Nothing
-      position = fromJust . getFirst . mconcat $ checkPosition <$> steps
-  setAt position (Just mark) board
+       p | isEmptyCell (board !!-!! p) -> First $ Just p
+         | otherwise                   -> First   Nothing
+
+  fromJust . getFirst . mconcat $ checkPosition <$> steps  
   where
     steps :: [Position]
     steps = [(1, ), (2, ), (0, )] <*> [1, 0, 2]

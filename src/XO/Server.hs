@@ -1,5 +1,6 @@
 module XO.Server
   ( runServer
+  , initApp
   ) where
 
 import XO.Game
@@ -15,9 +16,13 @@ type ServerState = [(Board, MarkXO)]
 
 -- | Run server
 runServer :: Int -> IO ()
-runServer port = do
+runServer port = run port =<< initApp
+
+-- | Init new server application
+initApp :: IO Application
+initApp = do
   state <- newMVar []
-  run port $ createApp state
+  return $ createApp state
 
 -- | Create server application
 createApp :: MVar ServerState -> Application

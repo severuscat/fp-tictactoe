@@ -1,5 +1,9 @@
 module XO.Client
   ( runGame
+  
+  , new
+  , step
+  , replay
   ) where
 
 import Servant.Client (ClientM, client, mkClientEnv, BaseUrl(..), Scheme(Http), runClientM)
